@@ -58,7 +58,19 @@ public class AuthController {
             //사용자로부터 입력받은 데이터와 에러메시지를 가지고 회원가입 페이지로 이동
             return "auth/signup";
         }
+        //username이 이미 존재할 시 키값에 오류 메시지 저장
+        if(authService.usernameChk(signupDto.getUsername()) != 0) {
+            model.addAttribute("valid_username", "이미 등록된 아이디입니다.");
+        }
+        //유효성 검사 성공시 회원가입 서비스 로직 실행
+        authService.signup(signupDto);
+
+        //회원가입 성공 메시지 출력후 로그인페이지로 이동
+        return Script.locationMsg("/auth/signin", "회원가입에 성공하였습니다.", model);
     }
+
+
+
 
 
 }

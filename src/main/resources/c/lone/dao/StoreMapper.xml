@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="c.lone.dao.StoreMapper">
+    <!--
+        매장의 우편번호가 사용자가 입력한 주소의 우편번호와 앞 3자리가 일치하는지 확인
+        like 사용
+    -->
+    <select id="storeList" resultType="c.lone.dto.StoreDto">
+        select * from dl_store where category = #{category} and store_address1 like #{address}||'%'
+    </select>
+    <select id="storeDetail" resultType="c.lone.dto.StoreDto">
+        select * from dl_store where id = #{storeId}
+    </select>
+    <select id="foodList" resultType="c.lone.dto.FoodDto">
+        select * from dl_food where store_id = #{storeId}
+    </select>
+    <select id="foodOption" resultType="c.lone.dto.FoodOptionDto">
+        select * from dl_food_option where food_id = #{foodId}
+    </select>
+</mapper>
