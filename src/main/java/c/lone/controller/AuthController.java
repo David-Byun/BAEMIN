@@ -10,6 +10,8 @@ import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 import java.util.Map;
 
@@ -22,8 +24,17 @@ public class AuthController {
         this.authService = authService;
     }
 
+    /*
+        비회원이 주문 이후 다시 초기 화면으로 가는 것을 막기 위해서 현재 페이지의 Header 정보를 세션에 저장해줌
+        로그인 페이지로 이동하기 전에 현재 페이지의 Header정보를 세션에 저장해줌
+     */
     @GetMapping("/auth/signin")
-    public String signin() {
+    public String signin(HttpServletRequest request, HttpSession session) {
+        //웹브라우저 사용자인 클라이언로부터 서버로 요청이 들어오면 서버에서는 HttpServletRequest를 생성하며, 요청정보에 있는 매핑된 서블렛에게 전달
+
+        //로그인, 로그아웃 했을 경우 이전페이지로 가지도록 로그인, 로그아웃 jsp에 request.getHeader("referer")를 만듦.
+        String referer = request.getHeader("referer");
+        session.setAttribute("referer", referer);
         return "auth/signin";
     }
 

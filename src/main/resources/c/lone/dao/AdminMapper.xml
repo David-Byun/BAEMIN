@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="c.lone.dao.AdminMapper">
+    <insert id="pointUpdate">
+        INSERT INTO DL_POINT (
+            USER_ID
+            , INFO
+            , POINT
+        ) VALUES (
+            #{userId}
+            , #{info}
+            , #{point}
+        )
+    </insert>
+    <update id="pointUpdateUser">
+        UPDATE DL_USER SET
+            POINT = #{totalPoint}
+        WHERE
+            ID = ${userId}
+    </update>
+
+</mapper>

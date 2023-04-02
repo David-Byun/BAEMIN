@@ -24,11 +24,33 @@ public class CartApiController {
         if (cartListDto == null) {
             List<CartDto> newCart = new ArrayList<>();
             newCart.add(cartDto);
-            new CartListDto(storeId, storeName, cartDto.getTotalPrice(), deliveryTip, newCart);
+            cartListDto = new CartListDto(storeId, storeName, cartDto.getTotalPrice(), deliveryTip, newCart);
         } else {
             //저장된 장바구니 목록이 있을시
-            List<CartDto>
+            List<CartDto> prevCart = cartListDto.getCartDto();
+            int prevCartTotal = cartListDto.getCartTotal();
+            cartListDto.setCartTotal(prevCartTotal + cartDto.getTotalPrice());
+
+            //이미 장바구니에 추가된 메뉴일 때(cartDto 메뉴, CartListDto 메뉴들의 장바구니)
+            if (prevCart.contains(cartDto)) {
+                // cartDto가 속해 있는 인덱스 넘버를 가져옴 indexOf()
+                int cartIndex = prevCart.indexOf(cartDto);
+                int amount = cartDto.getAmount();
+
+                CartDto newCart = prevCart.get(cartIndex);
+                int newAmount = newCart.getAmount() - amount;
+
+                newCart.setAmount(newAmount);
+                newCart.totalPriceCalc();
+                prevCart.set(cartIndex, newCart);
+            } else {
+                //장바구니에 추가되어 있지 않은 메뉴일때
+                prevCart.add(cartDto);
+            }
         }
+
+        session.setAttribute("cartList", cartListDto);
+        return cartListDto;
     }
 
     //장바구니 전체 삭제

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="c.lone.dao.OrderMapper">
+    <select id="getDeliveryTip" resultType="int">
+        SELECT DELIVERY_TIP FROM DL_STORE WHERE ID = #{storeId}
+    </select>
+
+    <select id="foodPriceList" resultType="int">
+        <foreach collection="list" item="item" separator="union all">
+            select sum(FOOD_PRICE) sum from DL_FOOD where id = #{item.foodId}
+        </foreach>
+    </select>
+
+    <select id="optionPriceList" resultType="int">
+        <foreach collection="list" item="item" separator="union all">
+            <if test="item.optionId == null">
+                select 0 from dual
+            </if>
+            <if test="item.optionId != null">
+                select sum(option_price) sum from DL_FOOD_OPTION where id in
+                <foreach collection="item.optionId" item="i" open="(" close=")" separator=",">#{i}</foreach>
+            </if>
+        </foreach>
+    </select>
+
+    <!-- userId가 0이 비회원인데 default 값으로 주는 것인가 ? -->
+    <insert id="order">
+        <if test="userId==0">
+            INSERT INTO DL_ORDER_NON_USER (ORDER_NUM, STORE_ID, USER_ID, ORDER_DATE, PAY_METHOD, PHONE,
+            DELIVERY_ADDRESS1, DELIVERY_ADDRESS2, DELIVERY_ADDRESS3, TOTAL_PRICE, USED_POINT, REQUEST) VALUES(
+            ${orderNum}
+            ,#{storeId}
+            ,#{userId}
+            ,#{payMethod}
+            ,#{phone}
+            ,#{DeliveryAddress1}
+            ,#{DeliveryAddress2}
+            ,#{DeliveryAddress3}
+            ,#{totalPrice}
+            ,#{usedPoint}
+            ,#{request}
+            )
+        </if>
+        <if test="userId != 0">
+            INSERT INTO DL_ORDER_USER (ORDER_NUM, STORE_ID, USER_ID, ORDER_DATE, PAY_METHOD, PHONE,
+            DELIVERY_ADDRESS1, DELIVERY_ADDRESS2, DELIVERY_ADDRESS3, TOTAL_PRICE, USED_POINT, REQUEST) VALUES(
+            ${orderNum}
+            ,#{storeId}
+            ,#{userId}
+            ,#{payMethod}
+            ,#{phone}
+            ,#{DeliveryAddress1}
+            ,#{DeliveryAddress2}
+            ,#{DeliveryAddress3}
+            ,#{totalPrice}
+            ,#{usedPoint}
+            ,#{request}
+            )
+        </if>
+    </insert>
+
+    <!--
+     DUAL is a special one-row, one-column table in Oracle databases, and SELECT * FROM DUAL is a query that returns a single row with a single column containing the value X. In this case, it's being used to ensure that the SQL statement is well-formed and complete, because the INSERT ALL statement requires a matching SELECT statement.
+    -->
+    <!-- If the condition is true, it enters a loop that iterates over the collection of items called detail. -->
+    <!-- 이때 Oracle사용시에는 실제로는 insert를 수행하지만 반드시 update를 사용하여야 에러가 발생하지 않습니다 -->
+    <update id="orderDetail" parameterType="java.util.HashMap">
+        <if test="userId != 0">
+            <foreach collection="detail" item="item" separator=" " open="INSERT ALL" close="SELECT * FROM DUAL">
+                INTO DL_ORDER_DETAIL_USER (
+                    ORDER_NUM
+                    , FOOD_INFO
+                ) VALUES (
+                    #{item.orderNum}
+                    ,#{item.foodInfoJSON}
+                )
+            </foreach>
+        </if>
+        <if test= "userId == 0">
+            <foreach collection="detail" item="item" separator=" " open="INSERT ALL" close="SELECT * FROM DUAL">
+                INTO DL_ORDER_DETAIL_NON_USER (
+                ORDER_NUM
+                ,FOOD_INFO
+                ) VALUES (
+                #{item.orderNum}
+                ,#{item.foodInfoJSON}
+                )
+            </foreach>
+        </if>
+    </update>
+    <!--
+        LISTAGG는 Order_Num과 똑같은 요소를 '/' 구분자로 하나의 칼럼으로 합쳐줌.
+        Order_Detail테이블의 경우 주문 메뉴 + 옵션을 하나의 칼럼으로 가지고 있고
+        하나의 주문에는 여러개의 메뉴가 존재할 수 있기 때문에 LISTAGG를 사용합니다.
+        우리는 Order_Detail에서 메뉴정보를 저장할 때 object를 json타입으로 변환해서 DB에 저장
+        LISTAGG를 사용하여 Dto에 해당 데이터를 받아오게 되면
+        "{json데이터}/{json데이터}/{json데이터}" 이런식으로 String으로 저장
+        우리는 "/"를 구분자로 하나로 합쳐져 있는 데이터를 다시 분리하여 배열로 만들고
+        이 json데이터를 Object로 변환(Gson 사용)
+     -->
+    <select id="orderList" resultType="c.lone.dto.OrderListDto">
+        SELECT * FROM (
+        SELECT ROWNUM R, O.*
+              FROM (SELECT COUNT(*) OVER() LIST_COUNT,
+                           o.order_num,
+                           o.delivery_address1,
+                           o.delivery_address2,
+                           o.delivery_address3,
+                           o.store_id,
+                           o.total_price,
+                           o.used_point,
+                           o.request,
+                           d.food_info,
+                           s.store_name,
+                           s.store_img,
+                           s.store_thumb,
+                           s.delivery_tip
+                    FROM DL_ORDER_USER O
+                             LEFT JOIN (SELECT ORDER_NUM,
+                                               LISTAGG(FOOD_INFO, '/') FOOD_INFO
+                                        FROM DL_ORDER_DETAIL_USER
+                                        GROUP BY ORDER_NUM) D
+                                        ON O.ORDER_NUM = D.ORDER_NUM
+                             LEFT JOIN DL_STORE S
+                                        ON O.STORE_ID = S.ID
+                    WHERE O.USER_ID = 8
+                    ORDER BY O.ORDER_DATE DESC))
+    </select>
+
+    <select id="orderListDetail" resultType="c.lone.dto.OrderListDto">
+        SELECT O.ORDER_NUM,
+               O.USER_ID,
+               O.ORDER_DATE,
+               O.PAY_METHOD,
+               O.DELIVERY_STATUS,
+               O.PHONE,
+               O.DELIVERY_ADDRESS1,
+               O.DELIVERY_ADDRESS2,
+               O.DELIVERY_ADDRESS3,
+               O.STORE_ID,
+               O.TOTAL_PRICE,
+               O.REQUEST,
+               D.FOOD_INFO,
+               S.STORE_NAME,
+               S.DELIVERY_TIP
+                FROM DL_ORDER_USER O
+                LEFT JOIN (SELECT ORDER_NUM,
+                                  LISTAGG(FOOD_INFO, '/') FOOD_INFO
+                            FROM DL_ORDER_DETAIL_USER
+                            GROUP BY ORDER_NUM) D
+                ON         O.ORDER_NUM = D.ORDER_NUM
+                LEFT JOIN  DL_STORE S
+                ON         O.STORE_ID = S.ID
+                WHERE      O.ORDER_NUM = #{orderNum}
+                ORDER BY   O.ORDER_DATE DESC
+
+    </select>
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

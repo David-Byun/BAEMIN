@@ -31,6 +31,11 @@ public class SecurityConfig {
                 .formLogin()
                 .loginPage("/auth/signin")
                 .loginProcessingUrl("/auth/signin")
+                /*
+                    기존에는 로그인 성공시 자동으로 home페이지로 이동되도록 설정
+                    로그인시에 바로 직전 페이지로 돌아가도록 해주기 위해 loginSucess라는 이름으로 successHandler를 하나 추가
+                    defaultSuccessUrl("/") => successHandler(loginSuccess)
+                */
                 .defaultSuccessUrl("/")
                 .failureUrl("/auth/failed");
 

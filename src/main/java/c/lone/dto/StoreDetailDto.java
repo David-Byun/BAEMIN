@@ -20,4 +20,6 @@ public class StoreDetailDto {
 
     //메뉴 목록
     private List<FoodDto> foodList;
+
+    private List<ReviewDto> reviewList;
 }
