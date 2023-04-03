@@ -7,11 +7,96 @@
         매장의 우편번호가 사용자가 입력한 주소의 우편번호와 앞 3자리가 일치하는지 확인
         like 사용
     -->
+    <!--
+        with절이란 임시테이블을 만든다는 관점에서 view와 쓰임새가 비슷하지만,
+        view는 drop할때까지 없어지지 않지만 with절은 정의되어 있는 쿼리문 안에서만 실행된다는 차이점 존재
+        제일 처음 리뷰 테이블에서 R_COUNT 임시테이블을 생성하고,
+        임시테이블과 매장테이블을 합친 후 다시 STORE 라는 이름으로 임시테이블을 생성한다.
+        임시테이블에서 현재시간이 오픈시간과 마감시간 사이 있으면 true 아니면 false 저장하고 UNION ALL 로 합쳐줍니다
+        ROWNUM을 넣는 이유는 페이징 기능을 추가하기 위해서이다.
+    -->
     <select id="storeList" resultType="c.lone.dto.StoreDto">
-        select * from dl_store where category = #{category} and store_address1 like #{address}||'%'
+        WITH R_COUNT AS (SELECT STORE_ID
+                              , ROUND(AVG(SCORE), 1)  SCORE
+                              , COUNT(REVIEW_CONTENT) REVIEW_COUNT
+                              , COUNT(BOSS_COMMENT)   BOSS_COMMENT_COUNT
+                         FROM DL_REVIEW
+                         GROUP BY STORE_ID),
+             STORE AS (SELECT S.*,
+                              T.*
+                       FROM DL_STORE S
+                                LEFT JOIN R_COUNT T
+                                          ON S.ID = T.STORE_ID
+                       WHERE CATEGORY = #{category}
+                                 AND STORE_ADDRESS1 LIKE #{addresss} || '%')
+
+                       <if test="sort == '배달 빠른 순'">
+                           ORDER BY DELIVERY_TIME
+                       </if>
+
+                       <if test="sort == '배달팁 낮은 순'">
+                           ORDER BY DELIVERY_TIP
+                       </if>
+
+                       <if test="sort == '별점 높은 순'">
+                           ORDER BY REVIEW_COUNT
+                       </if>
+
+                       <if test="sort == '최소 주문 금액 순'">
+                           ORDER BY MIN_DELIVERY
+                       </if>
+        )
+        SELECT *
+        FROM (SELECT ROWNUM RN,
+                     RESULT.*
+              FROM (SELECT C.*
+                         , 'true' IS_OPEN
+                    FROM STORE C
+                    WHERE TO_CHAR(SYSTIMESTAMP, 'HH24') BETWEEN OPENING_TIME AND CLOSING_TIME
+
+                    UNION ALL
+
+                    SELECT C.*
+                         , 'false' IS_OPEN
+                    FROM STORE C
+                    WHERE TO_CHAR(SYSTIMESTAMP, 'HH24') NOT BETWEEN OPENING_TIME AND CLOSING_TIME) RESULT)
+        WHERE RN BETWEEN #{firstList} AND ${listList}
     </select>
     <select id="storeDetail" resultType="c.lone.dto.StoreDto">
-        select * from dl_store where id = #{storeId}
+        SELECT RESULT.*
+             , CASE
+                   WHEN TO_CHAR(SYSDATE, 'HH24') BETWEEN OPENING_TIME AND CLOSING_TIME THEN 'TRUE'
+                   ELSE 'FALSE' END IS_OPEN
+             , L.IS_LIKES
+        FROM (SELECT S.*,
+                     C.*
+              FROM DL_STORE S
+                 , (SELECT *
+                    FROM (SELECT ROUND(AVG(SCORE), 1)                  AS SCORE
+                               , COUNT(REVIEW_CONTENT)                 AS REVIEW_COUNT
+                               , COUNT(BOSS_COMMENT)                   AS BOSS_COMMENT_COUNT
+                               , COUNT(CASE WHEN SCORE = 1 THEN 1 END) AS SCORE1
+                               , COUNT(CASE WHEN SCORE = 2 THEN 1 END) AS SCORE2
+                               , COUNT(CASE WHEN SCORE = 3 THEN 1 END) AS SCORE3
+                               , COUNT(CASE WHEN SCORE = 4 THEN 1 END) AS SCORE4
+                               , COUNT(CASE WHEN SCORE = 5 THEN 1 END) AS SCORE5
+                          FROM DL_REVIEW
+                          WHERE STORE_ID = #{storeId})
+                       , (SELECT SUM(ORDER_COUNT) AS ORDER_COUNT
+                          FROM (SELECT COUNT(*) AS ORDER_COUNT
+                                FROM DL_ORDER_USER
+                                WHERE STORE_ID = #{storeId}
+                                UNION ALL
+                                SELECT COUNT(*) AS ORDER_COUNT
+                                FROM DL_ORDER_NON_USER
+                                WHERE STORE_ID = #{storeId}))) AS C
+              WHERE ID = #{storeId}) RESULT
+                 LEFT JOIN (SELECT STORE_ID, 1 IS_LIKES
+                            FROM DL_LIKES
+                            WHERE EXISTS(SELECT 1 FROM DL_LIKES WHERE USER_ID = #{userId} AND STORE_ID = #{storeId})) L
+                            ON RESULT.ID = L.STORE_ID
+              <!-- 찜테이블에서 현재 로그인된 사용자와 접근한 매장의 ID가 일치하는 칼럼의 경우 1, 없을 경우 0을 IS_LIKES라는 이름으로 기존 매장상세 데이터에 붙여줌 -->
+
     </select>
     <select id="foodList" resultType="c.lone.dto.FoodDto">
         select * from dl_food where store_id = #{storeId}
@@ -42,6 +127,103 @@
         WHERE
             ORDER_NUM = ${orderNum}
     </update>
+    <select id="reviewList" resultType="c.lone.dto.ReviewDto">
+        SELECT R.ORDER_NUM,
+               R.STORE_ID,
+               R.REVIEW_CONTENT,
+               R.BOSS_COMMENT,
+               R.REGI_DATE,
+               R.SCORE,
+               R.REVIEW_IMG,
+               R.USER_ID,
+               U.NICKNAME
+        FROM DL_REVIEW R
+                 LEFT JOIN DL_USER U
+                           ON R.USER_ID = U.ID
+        WHERE R.STORE_ID = #{id}
+        ORDER BY REGI_DATE DESC;
+    </select>
+
+    <insert id="addLikes">
+        INSERT INTO DL_LIKES (USER_ID, STORE_ID)
+        VALUES (#{userId}, #{storeId});
+    </insert>
+
+    <delete id="deleteLikes">
+        DELETE DL_LIKES WHERE USER_ID = #{userId} AND STORE_ID = #{storeId}
+    </delete>
+
+    <select id="likesList" resultType="c.lone.dto.StoreDto">
+        WITH R_COUNT AS (SELECT STORE_ID
+                              , ROUND(AVG(SCORE), 1)  AS SCORE
+                              , COUNT(REVIEW_CONTENT) AS REVIEW_COUNT
+                              , COUNT(BOSS_COMMENT)   AS BOSS_COMMENT_COUNT
+                         FROM DL_REVIEW
+                         GROUP BY STORE_ID),
+             STORE AS (SELECT S.*,
+                              T.*,
+                              L.USER_ID,
+                              L.LIKES_DATE
+                       FROM DL_STORE S
+                                LEFT JOIN R_COUNT T
+                                          ON S.ID = T.STORE_ID
+                                LEFT JOIN DL_LIKES L
+                                          ON S.ID = L.STORE_ID
+                       WHERE USER_ID = #{userId})
+        SELECT *
+        FROM (SELECT ROWNUM RN,
+                     RESULT.*
+              FROM (SELECT C.*
+                         , 'true' IS_OPEN
+                    FROM STORE C
+                    WHERE TO_CHAR(SYSTIMESTAMP, 'HH24') BETWEEN OPENING_TIME AND CLOSING_TIME
+
+                    UNION ALL
+
+                    SELECT C.*
+                         , 'false' IS_OPEN
+                    FROM STORE C
+                    WHERE TO_CHAR(SYSTIMESTAMP, 'HH24') NOT BETWEEN OPENING_TIME AND CLOSING_TIME
+            ) RESULT
+        )
+        WHERE RN BETWEEN #{firstList} AND #{lastList}
+        ORDER BY LIKES_DATE DESC
+    </select>
+    <select id="storeSearch" resultType="c.lone.dto.StoreDto">
+        WITH R_COUNT AS (
+            SELECT STORE_ID
+                    , ROUND(AVG(SCORE), 1) AS SCORE
+                    , COUNT(REVIEW_CONTENT) AS REVIEW_COUNT
+                    , COUNT(BOSS_COMMENT) AS BOSS_COMMENT_COUNT
+            FROM DL_REVIEW
+            GROUP BY STORE_ID
+        ),
+        STORE AS (
+            SELECT S.*,
+                   T.*
+            FROM DL_STORE S
+            LEFT JOIN R_COUNT T
+            ON S.ID = T.STORE_ID
+            WHERE STORE_NAME LIKE '%${keyword}%'
+            AND STORE_ADDRESS1 LIKE '${address}%')
+        SELECT * FROM
+            (SELECT ROWNUM RN,
+                    RESULT.*
+             FROM (SELECT C.*
+                        , 'true' IS_OPEN
+                   FROM STORE C
+                   WHERE TO_CHAR(SYSTIMESTAMP, 'HH24') BETWEEN OPENING_TIME AND CLOSING_TIME
+
+                   UNION ALL
+
+                   SELECT C.*
+                        , 'false' IS_OPEN
+                   FROM STORE C
+                   WHERE TO_CHAR(SYSTIMESTAMP, 'HH24') NOT BETWEEN OPENING_TIME AND CLOSING_TIME)
+                 ) RESULT
+            )
+        WHERE RN BETWEEN #{firstList} AND ${lastList}
+    </select>
 </mapper>
 
 

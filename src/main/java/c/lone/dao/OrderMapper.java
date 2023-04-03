@@ -31,4 +31,6 @@ public interface OrderMapper {
 
     //주문목록 상세보기 페이지
     public OrderListDto orderListDetail(String orderNum);
+
+    //주문 전체 목록 가져오기
 }

@@ -22,4 +22,5 @@ public class StoreDetailDto {
     private List<FoodDto> foodList;
 
     private List<ReviewDto> reviewList;
+
 }
