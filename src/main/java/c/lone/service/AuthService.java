@@ -2,6 +2,7 @@ package c.lone.service;
 
 import c.lone.dao.AuthMapper;
 import c.lone.dto.SignupDto;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,8 +16,8 @@ import java.util.Map;
 @Service
 public class AuthService {
 
-    AuthMapper authMapper;
-    BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final AuthMapper authMapper;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
     public AuthService(AuthMapper authMapper, BCryptPasswordEncoder bCryptPasswordEncoder) {

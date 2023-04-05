@@ -17,6 +17,8 @@
 				<input type="submit" value="로그인" class="login_btn" >
             
 				<div class="box">
+				
+
 					<div class="continue_login">
 						<label for="continue_login"> 
 							<span>로그인 유지하기</span>

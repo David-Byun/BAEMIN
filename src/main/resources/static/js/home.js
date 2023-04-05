@@ -43,6 +43,7 @@ function execution_daum_address() {
 			setCookie("deliveryAddress1", data.zonecode, 30);
 			setCookie("deliveryAddress2", addr, 30);
 			
+			$("#address1").val(addr);
 			$("#deliveryAddress1").val(data.zonecode);
 			$("#deliveryAddress2").val(addr);
 			
@@ -83,6 +84,7 @@ $(".category li").click(function(){
 
 
 //페이지 진입시 쿠키에서 주소정보 읽어오기
+$("#address1").val(getCookie("deliveryAddress2"));
 $("#deliveryAddress1").val(getCookie("deliveryAddress1"));
 $("#deliveryAddress2").val(getCookie("deliveryAddress2"));
 

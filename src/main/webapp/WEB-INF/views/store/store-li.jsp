@@ -15,7 +15,7 @@
 			<h2><a href="${store_admin }/${storeList.id }/detail">${storeList.storeName }</a></h2>
 			
 			<a href="${store_admin }/${storeList.id }/detail">
-<%-- 				<span>
+				<span>
 					<span>평점 ${storeList.score }</span>
 					
 					<span class="score_box">
@@ -28,12 +28,12 @@
 							</c:if>
 						</c:forEach>
 					</span>
-				</span> --%>
+				</span>
 				
-<%-- 			<span>
+			<span>
 				<span>리뷰 ${storeList.reviewCount }</span>
 				<span>사장님 댓글 ${storeList.bossCommentCount }</span>
-			</span> --%>
+			</span>
 			
 			<span>
 				<span>최소주문금액 <fm:formatNumber value="${storeList.mindelivery }" pattern="###,###" />원</span>
@@ -44,9 +44,9 @@
 		</div>
 		
 		
-<%-- 	<c:if test="${!storeList.isOpen}">
+	<c:if test="${!storeList.isOpen}">
 		<div class="is_open">
-			<a href="/store/detail/${storeList.id }">지금은 준비중입니다</a>
+			<a href="/store/${storeList.id }/detail">지금은 준비중입니다</a>
 		</div>
-	</c:if> --%>
+	</c:if>
 </li>

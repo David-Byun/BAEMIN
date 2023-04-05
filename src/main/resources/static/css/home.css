@@ -2,6 +2,7 @@ body {
 	/* overflow-x: hidden;  */
 }
 
+
 .wrap {
     width: 95%;
     margin: 0 auto;
@@ -11,6 +12,7 @@ main {
    background: #fff; 
    padding-bottom: 50px;
 }
+
 
 .address_search #search_box {
    	width: 50%;
@@ -42,7 +44,7 @@ main {
 	color: #999999;
 }
 
- .address_search #deleveryAddress2 {
+ .address_search #deliveryAddress2 {
     height: 100%;
     width: 100%;
     padding-left: 10px;

@@ -40,7 +40,14 @@ public class StoreService {
     @Transactional
     public boolean reviewModify(ReviewDto reviewDto) {
         if (reviewDto.getFile() == null) {
-            reviewDto.setReviewImg("");
+            /*
+                이미지 첨부 리뷰를 수정할때 이미지 그대로 놔두고 다른 부분을 수정하게 되면 이미지가 삭제되는 오류가 있음
+                이미지를 업로드할 때는 MultipartFile을 이용하는데 이미지를 화면에 뿌려줄때는 서버에 저장된 이미지 주소를 img src를 사용하여 보여주므로
+                reviewDto.getFile() == null을 타고 reviewDto.setReviewImg("");로 이미지가 저장된 주소를 지워버리고 있었음
+             */
+            if (reviewDto.getReviewImg() == null || reviewDto.getReviewImg() == "") {
+                reviewDto.setReviewImg("");
+            }
         }
         else {
             if (!fileUpload.uploadReviewImg(reviewDto)) {
