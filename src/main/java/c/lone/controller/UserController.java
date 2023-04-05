@@ -1,9 +1,10 @@
-package c.lone.service;
+package c.lone.controller;
 
 import c.lone.config.auth.CustomUserDetails;
 import c.lone.dao.UserMapper;
 import c.lone.dto.PointDto;
 import c.lone.dto.ReviewDto;
+import c.lone.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;

@@ -1,6 +1,8 @@
-package c.lone.service;
+package c.lone.controller;
 
 import c.lone.config.auth.CustomUserDetails;
+import c.lone.service.AuthService;
+import c.lone.service.UserService;
 import c.lone.utils.UserInfoSessionUpdate;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -95,6 +97,7 @@ public class UserApiController {
         authNumMap.put("endTime", endTime);
         authNumMap.put("authNum", authNum);
 
+        //세션 타임아웃 설정
         session.setMaxInactiveInterval(300);
         session.setAttribute("authNum", authNumMap);
 
@@ -105,12 +108,42 @@ public class UserApiController {
     @PostMapping("/api/user/authNumCheck")
     private ResponseEntity<String> authNumCheck(String authNum, HttpSession session) {
         Map<String, Object> sessionAuthNumMap = (Map<String, Object>) session.getAttribute("authNum");
-
         String msg = "";
-        if (sessionAuthNumMap = null) {
-            msg=
+
+        if (sessionAuthNumMap == null) {
+            msg = "인증번호를 전송해주세요";
+            return new ResponseEntity<String>(msg, HttpStatus.BAD_REQUEST);
+        }
+
+        //인증번호 만료시간
+        long endTime = (long) sessionAuthNumMap.get("endTime");
+
+        //현재시간이 만료 시간이 지났다면
+        if (System.currentTimeMillis() > endTime) {
+            msg = "인증시간이 만료되었습니다";
+            session.setAttribute(authNum, null);
+            session.setMaxInactiveInterval(0);
+            return new ResponseEntity<String>(msg, HttpStatus.BAD_REQUEST);
+        }
+
+        //인증번호
+        String sessionAuthNum = (String) sessionAuthNumMap.get("authNum");
+        if (!authNum.equals(sessionAuthNum)) {
+            msg = "인증번호가 일치하지 않습니다";
+            return new ResponseEntity<String>(msg, HttpStatus.BAD_REQUEST);
+        } else {
+            /*
+                패스워드, 닉네임 변경의 경우
+                사용자 입력 > AJAX 요청 > modifyInfo(회원정보수정) > DB업데이트
+                핸드폰 번호 변경의 경우
+                사용자 입력 > 타이머 실행 > AJAX 요청 > authNum(인증번호 전송) > AJAX 요청
+                > authNumCheck(인증번호 확인) > AJAX 요청 > modifyInfo(회원정보수정) > DB 업데이트
+             */
+
+            return new ResponseEntity<String>(HttpStatus.OK);
         }
     }
+
 }
 
 

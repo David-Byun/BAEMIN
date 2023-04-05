@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="c.lone.dao.FindMapper">
+    <select id="emailCheck" resultType="String">
+        SELECT 1
+        FROM DUAL
+        WHERE EXISTS (
+            SELECT 1
+            FROM DL_USER
+            WHERE USERNAME = #{username}
+            AND EMAIL = #{email}
+        )
+    </select>
+    <select id="phoneCheck" resultType="String">
+
+
+    </select>
+    <select id="findId" resultType="String">
+        SELECT USERNAME
+        FROM DL_USER
+        WHERE EMAIL = #{email}
+    </select>
+</mapper>

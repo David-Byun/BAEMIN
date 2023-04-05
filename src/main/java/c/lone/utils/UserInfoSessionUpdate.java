@@ -29,6 +29,9 @@ public class UserInfoSessionUpdate {
         } else if (value.equals("point")) {
             int point = customUserDetail.getPoint() + Integer.parseInt(value);
             customUserDetail.setPoint(point);
+            //추가 핸드폰번호 변경시 스프링시큐리티 세션에 핸드폰번호 업데이트
+        } else if (valueType.equals("phone")) {
+            customUserDetail.setPhone(value);
         }
 
         SecurityContext sc = SecurityContextHolder.getContext();
