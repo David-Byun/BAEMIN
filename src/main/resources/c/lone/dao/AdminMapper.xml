@@ -20,5 +20,7 @@
         WHERE
             ID = ${userId}
     </update>
+    <select id="myStore" resultType="c.lone.dto.StoreDto">
 
+    </select>
 </mapper>

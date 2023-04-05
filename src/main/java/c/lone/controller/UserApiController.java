@@ -2,6 +2,7 @@ package c.lone.controller;
 
 import c.lone.config.auth.CustomUserDetails;
 import c.lone.service.AuthService;
+import c.lone.service.FindService;
 import c.lone.service.UserService;
 import c.lone.utils.UserInfoSessionUpdate;
 import lombok.AllArgsConstructor;
@@ -24,6 +25,7 @@ public class UserApiController {
     private final UserService userService;
     private final AuthService authService;
     private final BCryptPasswordEncoder encodePwd;
+    private final FindService findService;
     // private final FindServide findServide;
 
     @PatchMapping("/api/user/info")
@@ -86,8 +88,7 @@ public class UserApiController {
         if (phone != null) {
             System.out.println("전화번호로 인증번호 보내기");
         } else if (email != null) {
-            System.out.println("이메일로 인증번호 보내기");
-            //findService.sendAuthNum(email, authNum)
+            findService.sendAuthNum(email, authNum);
         }
         Map<String, Object> authNumMap = new HashMap<>();
         long createTime = System.currentTimeMillis();//인증번호 생성시간
@@ -142,9 +143,45 @@ public class UserApiController {
 
             return new ResponseEntity<String>(HttpStatus.OK);
         }
+
+
+    }
+
+    //비밀번호 변경
+    @PatchMapping("/api/user/password")
+    public ResponseEntity<String> modifyPassword(String password, String username, HttpSession session) {
+        password = encodePwd.encode(password);
+        userService.modifyInfo(username, "password", password);
+        session.setMaxInactiveInterval(0);
+        session.setAttribute("authStatus", null);
+        return new ResponseEntity<String>("비밀번호를 변경했습니다", HttpStatus.OK);
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

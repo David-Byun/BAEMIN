@@ -3,8 +3,12 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="c.lone.dao.FindMapper">
+    <!--
+        EXISTS가 COUNT 쿼리보다 좀더 빠른 성능 가짐
+        데이터를 조회하다 해당 데이터가 존재할 경우 데이터를 끝까지 조회하지 않고 그순간 종료
+    -->
     <select id="emailCheck" resultType="String">
-        SELECT 1
+        SELECT 1 RESULT
         FROM DUAL
         WHERE EXISTS (
             SELECT 1
@@ -14,7 +18,14 @@
         )
     </select>
     <select id="phoneCheck" resultType="String">
-
+        SELECT 1 RESULT
+        FROM DUAL
+        WHERE EXISTS (
+            SELECT 1
+            FROM DL_USER
+            WHERE USERNAME = #{username}
+            AND PHONE = #{phone}
+        )
 
     </select>
     <select id="findId" resultType="String">

@@ -1,7 +1,9 @@
 package c.lone.dao;
 
+import c.lone.dto.StoreDto;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
 import java.util.Map;
 
 /*
@@ -17,4 +19,7 @@ public interface AdminMapper {
 
     //유저 테이블 point update
     public int pointUpdateUser(Map<String, Object> pointUpdateMap);
+
+    //운영중인 매장 목록
+    public List<StoreDto> myStore(long userId);
 }
