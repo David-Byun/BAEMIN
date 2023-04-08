@@ -2,6 +2,7 @@ package c.lone.utils;
 
 import c.lone.dto.ReviewDto;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,11 +28,11 @@ import java.util.UUID;
  */
 @Component
 public class FileUpload {
-    public boolean uploadReviewImg(ReviewDto reviewDto) {
+    public String uploadImg(MultipartFile file, String imgPathName) {
 
         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyMMdd"));
         String uploadFolder = Paths.get("Users", "david", "upload").toString();
-        String imageUploadFolder = Paths.get("reviewImg", today).toString();
+        String imageUploadFolder = Paths.get(imgPathName, today).toString();
         String uploadPath = Paths.get(uploadFolder, imageUploadFolder).toString();
 
         File dir = new File(uploadPath);
@@ -40,21 +41,20 @@ public class FileUpload {
         }
 
         UUID uuid = UUID.randomUUID();
-        String reviewImgName = uuid + "_" + reviewDto.getFile().getOriginalFilename();
+        String ImgName = uuid + "_" + file.getOriginalFilename();
 
         try {
-            File target = new File(uploadPath, reviewImgName);
-            reviewDto.getFile().transferTo(target);
+            File target = new File(uploadPath, ImgName);
+            file.transferTo(target);
         } catch (IOException e) {
-            return false;
+
         }
         /*
             FileUpload.java에서 앞에 역슬래시만 추가해줬습니다. 역슬래시를 추가하지 않을 경우 서버 최상위 주소가 아닌 현재 페이지에 이미지주소를 붙여 정상출력되지 않습니다
             무슨소리냐면 앞에 역슬래시를 추가하지 않았을때 주문목록 페이지에서 이미지를 불러올경우 localhost:8080/orderList/이미지주소로 불러오게 됩니다
             역슬래시를 추가해줘야 localhost:8080/이미지주소로 정상적으로 이미지를 불러올수 있습니다
          */
-        reviewDto.setReviewImg("\\upload\\" + imageUploadFolder + "\\" + reviewImgName);
-        return true;
+        return "\\upload\\" + imageUploadFolder + "\\" + ImgName;
 
     }
 }

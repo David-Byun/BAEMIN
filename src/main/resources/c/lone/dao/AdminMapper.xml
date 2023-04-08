@@ -21,6 +21,171 @@
             ID = ${userId}
     </update>
     <select id="myStore" resultType="c.lone.dto.StoreDto">
-
+        WITH R_COUNT AS (
+            SELECT STORE_ID
+                    , ROUND(AVG(SCORE), 1) AS SCORE
+                    , COUNT(REVIEW_CONTENT) AS REVIEW_COUNT
+                    , COUNT(BOSS_COMMENT) BOSS_COMMENT_COUNT
+            FROM DL_REVIEW
+            GROUP BY STORE_ID
+        ),
+        STORE AS (
+            SELECT S.*,
+                   T.*
+            FROM DL_STORE S
+            LEFT JOIN R_COUNT T
+            ON S.ID = T.STORE_ID
+            LEFT JOIN DL_MY_STORE M
+            ON S.ID = M.STORE_ID
+            WHERE M.USER_ID = #{user_id}
+        )
+        SELECT * FROM STORE
     </select>
+    <insert id="addMenu">
+    <!--
+        addMenu의 selectKey 부분은 id를 생성해주는 부분이다. 메뉴추가를 할 때 FOOD 테이블뿐만 아니라 FOOD_OPTION 테이블에도 등록해야 함. FOOD 테이블의 ID 경우 시퀀스를 통해 자동생성 가능
+        FOOD_OPTION 테이블의 경우 등록할때 FOOD 테이블의 ID 가 필요함. 즉 FOOD 테이블 INSERT 하고 이 ID 를 확인하기 위해서 다시 SELECT 하고 그 이후 FOOD_OPTION 테이블에 등록해야 함
+        하지만 selectKey를 설정하고 order=BEFORE로 할 경우 밑의 INSERT 쿼리가 처리되기전에 id가 생성되므로 중간에 SELECT를 건너뛸 수 있음
+    -->
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">
+        SELECT FOOD_ID_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO DL_FOOD (
+        ID, STORE_ID, FOOD_NAME, FOOD_PRICE, FOOD_DEC, FOOD_IMG, FOOD_THUMB) VALUES (#{id}, #{storeId}, #{foodName}, #{foodPrice}, #{foodDec}, #{foodImg}, #{foodThumb});
+    </insert>
+
+    <insert id="addMenuOption">
+        INSERT INTO DL_FOOD_OPTION
+        SELECT OPTION_ID_SEQ.NEXTVAL, F.*
+        FROM (
+            <foreach collection="list" item="item" separator="UNION ALL">
+            SELECT #{item.foodId}
+                , #{item.optionName}
+                , #{item.optionPrice}
+                FROM DUAL
+            </foreach>
+        ) F
+    </insert>
+    <delete id="deleteMenuOption">
+        DELETE DL_FOOD_OPTION WHERE FOOD_ID = #{foodId}
+    </delete>
+    <!--
+        <<업데이트 관련 고민>>
+        가장 심플한 방법은 메뉴를 수정할 때 FOOD_OPTION 테이블에서 기존 메뉴에 존재했던 옵션을 모두 지우고 현재 입력받은 옵션 모두 다시 추가
+        이 방법은 한가지 문제가 존재하는데 FOOD_OPTION의 ID번호는 시퀀스로 자동증가하므로 ID값이 빠르게 증가한다.
+        따라서 복잡하지만 옵션이 존재하지 않는 경우 / 새로추가한 옵션이 있는 경우 / 기존 옵션의 내용을 변경한 경우를 나누어 코드 작성
+
+        <<해결>>
+        메뉴 수정의 경우 수정데이터에서 옵션정보가 존재하지 않을 경우 테이블에 존재하는 옵션정보 삭제
+        옵션정보 존재시 FOOD_OPTION 테이블에서 현재 입력받은 옵션데이터의 ID를 제외한 나머지 옵션 전부 삭제
+        그 이후 새로 추가한 옵션의 경우 addMenu에서와 마찬가지로 ID가 존재하지 않으므로 INSERT를 실행하고
+        기존에 있었던 옵션의 내용 변경한 경우 옵션ID가 존재하므로 내용만 UPDATE
+    -->
+    <update id="updateMenu">
+        DECLARE BEGIN
+            UPDATE DL_FOOD
+            SET STORE_ID = #{food.storeId}
+                , FOOD_NAME = #{food.foodName}
+                , FOOD_PRICE = #{food.foodPrice}
+                , FOOD_DEC = #{food.foodDec}
+                , FOOD_IMG = #{food.foodImg}
+                , FOOD_THUMB = #{food.foodThumb}
+            WHERE ID = #{food.id}
+
+            <if test="optionList != null">
+                DELETE DL_FOOD_OPTION WHERE FOOD_ID = #{food.id} AND ID NOT IN
+                <foreach collection="optionList" item="item" open="(" close=")" separator=",">
+                    ${item.optionId}
+                </foreach>
+            <foreach collection="optionList" item="item" separator=";" close=";">
+                <if test="item.optionId == -1">
+                    INSERT INTO DL_FOOD_OPTION
+                    VALUES      (OPTION_ID_SEQ.NEXTVAL
+                                , #{food.id}
+                                , #{item.optionName}
+                                , #{item.optionPrice})
+                </if>
+                <if test="item.optionId != -1">
+                    UPDATE DL_FOOD_OPTION
+                    SET OPTION_NAME = #{item.optionName}
+                        , OPTION_PRICE = #{item.optionPrice}
+                    WHERE FOOD_ID = #{food.id}
+                    AND ID = #{item.optionId}
+                </if>
+            </foreach>
+            </if>
+        END;
+    </update>
+
+    <update id="storeInfoUpdate">
+        UPDATE DL_STORE SET
+                CATEGORY = #{category}
+                , STORE_NAME = #{storeName}
+                , STORE_ADDRESS1 = #{storeAddress1}
+                , STORE_ADDRESS2 = #{storeAddress2}
+                , STORE_PHONE = #{storePhone}
+                , STORE_IMG = #{storeImg}
+                , STORE_THUMB = #{storeThumb}
+                , OPENING_TIME = #{openingTime}
+                , CLOSING_TIME = #{closingTime}
+                , MIN_DELIVERY = #{mindelivery}
+                , DELIVERY_TIME = #{deliveryTime}
+                , DELIVERY_TIP = #{deliveryTip}
+                , STORE_DES = #{storeDes}
+        WHERE
+                ID = #{id}
+    </update>
+    <update id="bossComment">
+        UPDATE DL_REVIEW SET
+            BOSS_COMMENT = #{bossComment}
+        WHERE
+            ORDER_NUM = #{orderNum}
+        AND
+            STORE_ID = #{storeId}
+    </update>
 </mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

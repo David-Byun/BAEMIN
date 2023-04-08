@@ -1,5 +1,7 @@
 package c.lone.dao;
 
+import c.lone.dto.FoodDto;
+import c.lone.dto.OrderListDto;
 import c.lone.dto.StoreDto;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -22,4 +24,47 @@ public interface AdminMapper {
 
     //운영중인 매장 목록
     public List<StoreDto> myStore(long userId);
+
+    public void addMenu(FoodDto foodDto);
+
+    public void deleteMenu(long storeId, long[] deleteNumber);
+
+    public void updateMenu(Map<String, Object> foodUpdateMap);
+
+    public void addMenuOption(List<Map<String, Object>> optionList);
+
+    public void deleteMenuOption(long foodId);
+
+    //매장 정보 수정
+    public void storeInfoUpdate(StoreDto storeDto);
+
+    //사장님 답글
+    public void bossComment(Map<String, Object> map);
+
+    //주문목록
+    public List<OrderListDto> orderList(Map<String, Object> map);
+    
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
