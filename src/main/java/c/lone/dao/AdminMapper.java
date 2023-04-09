@@ -1,8 +1,6 @@
 package c.lone.dao;
 
-import c.lone.dto.FoodDto;
-import c.lone.dto.OrderListDto;
-import c.lone.dto.StoreDto;
+import c.lone.dto.*;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -43,6 +41,21 @@ public interface AdminMapper {
 
     //주문목록
     public List<OrderListDto> orderList(Map<String, Object> map);
+
+    //주문처리
+    public void orderAccept(Map<String, Object> map);
+
+    //주문완료
+    public void orderComplete(Map<String, Object> map);
+
+    //주문취소
+    public void orderCancel(OrderCancelDto orderCancelDto);
+
+    //특정일 판매 데이터
+    public List<SalesDetailDto> salesDetail(Map<String, Object> map);
+
+    //특정기간 매출 데이터
+    public List<SalesDto> sales(Map<String, Object> map);
     
 }
 

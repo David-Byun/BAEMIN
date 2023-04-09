@@ -1,9 +1,6 @@
 package c.lone.controller;
 
-import c.lone.dto.CartDto;
-import c.lone.dto.FoodDto;
-import c.lone.dto.OrderListDto;
-import c.lone.dto.StoreDto;
+import c.lone.dto.*;
 import c.lone.service.AdminService;
 import c.lone.utils.FileUpload;
 import c.lone.utils.FoodInfoFromJson;
@@ -80,7 +77,7 @@ public class AdminApiController {
     //리뷰 답글 작성
     @PatchMapping("/api/admin/management/bossComment")
     public ResponseEntity<String> bossComment(long storeId, String orderNum, String bossComment) {
-        String reviewContent = adminService.bossCommen회t(storeId, orderNum, bossComment);
+        String reviewContent = adminService.bossComment(storeId, orderNum, bossComment);
         return ResponseEntity.ok().body(reviewContent);
     }
 
@@ -97,9 +94,35 @@ public class AdminApiController {
         List<List<CartDto>> menuList = new ArrayList<>();
         if (orderListDto.size() != 0 && orderListDto.get(0).getFoodInfo() != null) {
             for (int i = 0; i < orderListDto.size(); i++) {
-                menuList.add(FoodInfoFromJson)
+                menuList.add(FoodInfoFromJson.foodInfoFromJson(orderListDto.get(i).getFoodInfo()));
             }
         }
+        map.put("orderList", orderListDto);
+        map.put("cartList", menuList);
+        return ResponseEntity.ok().body(map);
+    }
+
+    //주문 수락
+    @PatchMapping("/api/admin/management/orderAccept")
+    public ResponseEntity<String> orderAccept(String orderNum, long userId) {
+        //userId == 0 비회원
+        adminService.orderAccept(orderNum, userId);
+        return ResponseEntity.ok().body("주문접수완료");
+    }
+
+    //주문 완료
+    @PatchMapping("/api/admin/management/orderComplete")
+    public ResponseEntity<String> orderComplete(String orderNum, long userId) {
+        //userId == 0 비회원
+        adminService.orderComplete(orderNum, userId);
+        return ResponseEntity.ok().body("주문 완료");
+    }
+
+    //주문취소
+    @PatchMapping("/api/admin/management/orderCancel")
+    public ResponseEntity<String> orderCancel(OrderCancelDto orderCancelDto) {
+        adminService.orderCancel(orderCancelDto);
+        return ResponseEntity.ok().body("주문취소완료");
     }
 }
 

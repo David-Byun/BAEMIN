@@ -49,4 +49,9 @@ public class AdminController {
     public String order(@PathVariable long id) {
         return "admin/order";
     }
+
+    @GetMapping("/admin/management/sales/{id}")
+    public String sales(@PathVariable long id) {
+        return "admin/sales";
+    }
 }

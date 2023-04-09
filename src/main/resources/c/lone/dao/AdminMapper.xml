@@ -143,6 +143,97 @@
         AND
             STORE_ID = #{storeId}
     </update>
+    <select id="orderList" resultType="c.lone.dto.OrderListDto">
+        WITH T_ORDER AS (
+            SELECT * FROM
+            (
+                SELECT * FROM DL_ORDER_USER UNION ALL SELECT * FROM DL_ORDER_NON_USER
+            )
+            WHERE STORE_ID = #{storeId}
+        ),
+        T_DETAIL AS (
+            SELECT ORDER_NUM,
+                   <!--
+                        특정 컬럼의 내용들을 1개 셀안에서 나열하고 싶을때 LISTAGG 사용
+                        Group by 또는 order by와 사용
+                        LISTAGG(컬럼이름, '구분문자')
+                   -->
+        LISTAGG(FOOD_INFO, '/') FOOD_INFO
+        FROM DL_ORDER_DETAIL_USER N
+        GROUP BY ORDER_NUM
+        UNION ALL
+        SELECT ORDER_NUM,
+        LISTAGG(FOOD_INFO, '/') FOOD_INFO
+        FROM DL_ORDER_DETAIL_NON_USER N
+        GROUP BY ORDER_NUM
+        )
+        SELECT COUNT1
+        , COUNT2
+        , COUNT3
+        , COUNT4
+        , O.*
+        , D.FOOD_INFO
+        , S.STORE_NAME
+        , S.DELIVERY_TIP
+        FROM (
+        SELECT #{storeId} AS STORE_ID
+                        , A.COUNT COUNT1
+                        , B.COUNT COUNT2
+                        , C.COUNT COUNT3
+                        , D.COUNT COUNT4
+                FROM (SELECT COUNT(*) COUNT FROM T_ORDER WHERE DELIVERY_STATUS = '주문접수 대기중') A,
+                     (SELECT COUNT(*) COUNT FROM T_ORDER WHERE DELIVERY_STATUS = '배달 준비 중') B,
+                     (SELECT COUNT(*) COUNT FROM T_ORDER WHERE DELIVERY_STATUS = '주문 취소') C,
+                     (SELECT COUNT(*) COUNT FROM T_ORDER WHERE DELIVERY_STATUS = '배달 완료') D
+        ) ORDER_COUNT
+        LEFT JOIN
+        (SELECT * FROM (
+            (SELECT ROWNUM RN, T.* FROM (
+                SELECT * FROM T_ORDER WHERE DELIVERY_STATUS LIKE '${list}%' ORDER BY ORDER_DATE) T
+                WHERE RN BETWEEN 1 AND #{lastlist}))) O
+        ON ORDER_COUNT.STORE_ID = O.STORE_ID
+        LEFT JOIN T_DETAIL D
+        ON O.ORDER_NUM = D.ORDER_NUM
+        LEFT JOIN DL_STORE S
+        ON O.STORE_ID = S.ID
+        ORDER BY ORDER_DATE
+    </select>
+
+    <!-- 주문수락 -->
+    <update id="orderAccept">
+        <if test="userId == 0">
+            UPDATE DL_ORDER_NON_USER SET
+        </if>
+        <if test="userId != 0">
+            UPDATE DL_ORDER_USER SET
+        </if>
+            DELIVERY_STATUS = '배달 준비 중'
+            WHERE ORDER_NUM = #{orderNum}
+    </update>
+
+    <!-- 배달완료 -->
+    <update id="orderComplete">
+        <if test="userId == 0">
+            UPDATE DL_ORDER_NON_USER SET
+        </if>
+        <if test="userId != 0">
+            UPDATE DL_ORDER_USER SET
+        </if>
+            DELIVERY_STATUS = '배달 완료'
+            WHERE ORDER_NUM = #{orderNum}
+    </update>
+
+    <!-- 주문취소 -->
+    <update id="orderCancel">
+        <if test="userId == 0">
+            UPDATE DL_ORDER_NON_USER SET
+        </if>
+        <if test="userId != 0">
+            UPDATE DL_ORDER_USER SET
+        </if>
+            DELIVERY_STATUS = '주문 취소'
+            WHERE ORDER_NUM = #{orderNum}
+    </update>
 </mapper>
 
 

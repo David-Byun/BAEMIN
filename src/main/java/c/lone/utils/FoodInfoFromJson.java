@@ -19,6 +19,7 @@ public class FoodInfoFromJson {
 
         List<CartDto> cartDtoList = new ArrayList<>();
         for (int i = 0; i < arr.length; i++) {
+            //json => CartDto 객체로 변환해서 cartDtoList에 추가
             cartDtoList.add(gson.fromJson(arr[i], CartDto.class));
 
         }

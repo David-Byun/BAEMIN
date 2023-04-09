@@ -27,7 +27,8 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    public String order(HttpSession session, Model model) {
+    @GetMapping("/order/{storeId}")
+    public String order(@PathVariable long storeId, HttpSession session, Model model) {
         CartListDto cartListDto = (CartListDto) session.getAttribute("cartList");
         model.addAttribute("cartList", cartListDto);
 

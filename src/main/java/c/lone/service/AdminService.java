@@ -2,10 +2,12 @@ package c.lone.service;
 
 import c.lone.dao.AdminMapper;
 import c.lone.dto.FoodDto;
+import c.lone.dto.OrderCancelDto;
 import c.lone.dto.OrderListDto;
 import c.lone.dto.StoreDto;
 import c.lone.utils.Page;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -104,6 +106,29 @@ public class AdminService {
         map.put("firstList", p.getFirstList());
         return adminMapper.orderList(map);
     }
+
+    //주문 수락
+    public void orderAccept(String orderNum, long userId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("orderNum", orderNum);
+        map.put("userId", userId);
+        adminMapper.orderAccept(map);
+    }
+
+    //주문 완료
+    public void orderComplete(String orderNum, long userId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("orderNum", orderNum);
+        map.put("userId", userId);
+        adminMapper.orderComplete(map);
+    }
+
+    //주문 취소
+    public void orderCancel(OrderCancelDto orderCancelDto) {
+        adminMapper.orderCancel(orderCancelDto);
+
+    }
+
 }
 
 
