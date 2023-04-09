@@ -234,7 +234,95 @@
             DELIVERY_STATUS = '주문 취소'
             WHERE ORDER_NUM = #{orderNum}
     </update>
+    <select id="salesDetail" resultType="c.lone.dto.SalesDetailDto">
+        WITH T_ORDER AS (
+            SELECT * FROM (
+                SELECT ORDER_NUM, STORE_ID, ORDER_DATE, TOTAL_PRICE, DELIVERY_STATUS FROM DL_ORDER_USER
+                UNION ALL
+                SELECT ORDER_NUM, STORE_ID, ORDER_DATE, TOTAL_PRICE, DELIVERY_STATUS FROM DL_ORDER_NON_USER
+            )
+            WHERE STORE_ID = #{storeId}
+            AND DELIVERY_STATUS = '배달 완료'
+            <if test="date == null">
+            AND TO_CHAR(ORDER_DATE, 'YYYYMMDD') = TO_CHAR(SYSDATE, 'YYYYMMDD')
+            </if>
+            <if test="date != null">
+            AND TO_CHAR(ORDER_DATE, 'YYYY-MM-DD') = #{date}
+            </if>
+        ),
+        T_DETAIL AS (
+            SELECT ORDER_NUM,
+                   LISTAGG(FOOD_INFO, '/') FOOD_INFO
+            FROM DL_ORDER_DETAIL_USER N
+            GROUP BY ORDER_NUM
+            UNION ALL
+            SELECT ORDER_NUM,
+                   LISTAGG(FOOD_INFO, '/') FOOD_INFO
+            FROM DL_ORDER_DETAIL_NON_USR N
+            GROUP BY ORDER_NUM
+        )
+        SELECT TOTAL_PRICE
+                , FOOD_INFO
+        FROM T_ORDER O
+        LEFT JOIN T_DETAIL D
+        ON O.ORDER_NUM = D.ORDER_NUM
+    </select>
+    <select id="sales" resultType="c.lone.dto.SalesDto">
+        WITH T_ORDER AS (
+            SELECT STORE_ID
+                    , TO_DATE(ORDER_DATE) ORDER_DATE
+                    , TOTAL_PRICE
+            FROM (
+                SELECT TO_CHAR(ORDER_DATE, 'YYYY/MM/DD') ORDER_DATE, STORE_ID, TOTAL_PRICE, DELIVERY STATUS FROM DL_ORDER_USER
+                UNION ALL
+                SELECT TO_CHAR(ORDER_DATE, 'YYYY/MM/DD') ORDER_DATE, STORE_ID, TOTAL_PRICE, DELIVERY_STATUS FROM DL_ORDER_DETAIL_NON_USER
+                )
+            WHERE STORE_ID = #{storeId}
+            AND DELIVERY_STATUS = '배달 완료'
+            <!--
+                여러개의 if태그를 사용하는 경우 if태그는 모두 쿼리문이 실행됨. choose 태그는 여러개의 when 태그문의 경우 조건식 true를 반환하는 when 태그를 찾으면
+                거기서 멈추고 해당 when 태그의 쿼리만 실행됨.
+             -->
+            <choose>
+                <when test="term == 'year'">
+                    AND ORDER_DATE BETWEEN TRUNC(TO_DATE(#{date}), 'YYYY') AND LAST_DATE(#{date})
+                </when>
+                <otherwise>
+                    AND ORDER_DATE BETWEEN TRUNC(TO_DATE(#{date}), 'MM') AND LAST_DAY(#{date})
+                </otherwise>
+            </choose>
+        )
+        <if test="term == 'month'">
+            SELECT CAL.ORDER_DATE
+                    , SUM(O.TOTAL_PRICE) TOTAL
+            FROM (
+                SELECT FIRST_DAY + LEVEL - 1 ORDER_DATE
+                FROM (
+                    SELECT TRUNC(TO_DATE(#{date}), 'MM') FIRST_DAY FROM DUAL
+                )
+                CONNECT BY FIRST_DAY + LEVEL - 1 < ![CDATA[<=]] < LAST_DAY(#{date})
+            ) CAL
+            LEFT JOIN
+        </if>
+    </select>
+
 </mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

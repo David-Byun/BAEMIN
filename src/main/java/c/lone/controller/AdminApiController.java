@@ -124,6 +124,26 @@ public class AdminApiController {
         adminService.orderCancel(orderCancelDto);
         return ResponseEntity.ok().body("주문취소완료");
     }
+
+    /*
+        특정 기간 매출 데이터 - term(기간)을 파라미터로 받음(년/월/주)
+     */
+    @GetMapping("/api/admin/management/sales")
+    public ResponseEntity<List<SalesDto>> sales(long storeId, String date, String term) {
+        System.out.printf("가게번호 : %d, 날짜 : %s", storeId, date);
+        List<SalesDto> sales = adminService.sales(storeId, date, term);
+        return ResponseEntity.ok().body(sales);
+    }
+
+    /*
+        특정일 판매 데이터
+        어떤 메뉴가 얼마나 팔렸는지 이름순/가격순으로 나열하기 위해 파라미터로 sort를 추가로 받음
+     */
+    @GetMapping("/api/admin/management/salesDetail")
+    public ResponseEntity<Map<String, Object>> salesDetail(long storeId, String date, String sort) {
+        Map<String, Object> salesToday = adminService.salesDetail(storeId, date, sort);
+        return ResponseEntity.ok().body(salesToday);
+    }
 }
 
 

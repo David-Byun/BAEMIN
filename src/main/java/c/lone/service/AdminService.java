@@ -1,11 +1,10 @@
 package c.lone.service;
 
 import c.lone.dao.AdminMapper;
-import c.lone.dto.FoodDto;
-import c.lone.dto.OrderCancelDto;
-import c.lone.dto.OrderListDto;
-import c.lone.dto.StoreDto;
+import c.lone.dto.*;
+import c.lone.utils.FoodInfoFromJson;
 import c.lone.utils.Page;
+import c.lone.utils.SalesSort;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -127,6 +126,54 @@ public class AdminService {
     public void orderCancel(OrderCancelDto orderCancelDto) {
         adminMapper.orderCancel(orderCancelDto);
 
+    }
+
+    //특정일 판매 목록
+    public Map<String, Object> salesDetail(long storeId, String date, String sort) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("storeId", storeId);
+        map.put("date", date);
+        List<SalesDetailDto> salesToday = adminMapper.salesDetail(map);
+        long total = 0;
+
+        List<CartDto> menuList = new ArrayList<>();
+        for (int i = 0; i < salesToday.size(); i++) {
+            List<CartDto> cartList = FoodInfoFromJson.foodInfoFromJson(salesToday.get(i).getFoodInfo());
+            for (int j = 0; j < cartList.size(); j++) {
+                CartDto cart = cartList.get(i);
+                if (menuList.contains(cart)) {
+                    int index = menuList.indexOf(cart);
+                    int amount = cart.getAmount();
+                    int price = cart.getTotalPrice();
+
+                    menuList.get(index).setAmount(amount + menuList.get(index).getAmount());
+                    menuList.get(index).setTotalPrice(price + menuList.get(index).getTotalPrice());
+                } else {
+                    menuList.add(cartList.get(j));
+                }
+            }
+            total += salesToday.get(i).getTotalPrice();
+        }
+        map.remove("storeId");
+        map.remove("date");
+
+        new SalesSort(menuList, sort);
+        map.put("menuList", menuList);
+        map.put("total", total);
+
+        return map;
+    }
+
+    //특정 기간 매출 데이터
+    public List<SalesDto> sales(long storeId, String date, String term) {
+        //특정 기간 매출데이터에서 date + "-01"을 해주는 이유는 현재 date의 경우 2022-08처럼 달까지만 넘어오기 때문
+        date = date + "-01";
+        Map<String, Object> map = new HashMap<>();
+        map.put("storeId", storeId);
+        map.put("date", date);
+        map.put("term", term);
+
+        return adminMapper.sales(map);
     }
 
 }
