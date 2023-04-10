@@ -4,6 +4,7 @@ import c.lone.config.auth.CustomUserDetails;
 import c.lone.dao.OrderMapper;
 import c.lone.dto.*;
 import com.google.gson.Gson;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +17,7 @@ import java.util.Map;
 @Service
 public class OrderService {
 
-    OrderMapper orderMapper;
+    private final OrderMapper orderMapper;
 
     @Autowired
     public OrderService(OrderMapper orderMapper) {

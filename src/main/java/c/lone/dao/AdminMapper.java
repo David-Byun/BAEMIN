@@ -56,6 +56,9 @@ public interface AdminMapper {
 
     //특정기간 매출 데이터
     public List<SalesDto> sales(Map<String, Object> map);
+
+    //관리중인 매장 리스트
+    public List<Long> getMyStoreId(long userId);
     
 }
 

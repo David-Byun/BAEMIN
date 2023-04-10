@@ -176,6 +176,11 @@ public class AdminService {
         return adminMapper.sales(map);
     }
 
+    //관리중인 매장 리스트
+    public List<Long> getMyStoreId(long userId) {
+        return adminMapper.getMyStoreId(userId);
+    }
+
 }
 
 

@@ -300,10 +300,36 @@
                 FROM (
                     SELECT TRUNC(TO_DATE(#{date}), 'MM') FIRST_DAY FROM DUAL
                 )
-                CONNECT BY FIRST_DAY + LEVEL - 1 < ![CDATA[<=]] < LAST_DAY(#{date})
+                    <!-- LAST_DAY 함수 사용핦 경우 해당 해 또는 달의 마지막날짜까지 검색-->
+                CONNECT BY FIRST_DAY + LEVEL - 1 <![CDATA[<=]]> LAST_DAY(#{date})
             ) CAL
-            LEFT JOIN
+            LEFT JOIN T_ORDER O
+            ON CAL.ORDER_DATE = O.ORDER_DATE
+            GROUP BY ROLLUP(CAL.ORDER_DATE)
+            <!--
+                해당달의 첫쨋날 ~ 해당달의 마지막날을 구하여 CONNECT BY 사용하여 모든날짜를 기준으로
+                행을 만들고 ROLLUP 함수를 이용해 각 행 ORDER_DATE를 기준으로 합계를 구함
+            -->
+            ORDER BY ORDER_DATE
         </if>
+        <if test="term == 'week'">
+            SELECT CAL.ORDER_DATE
+                    , SUM(O.TOTAL_PRICE) TOTAL
+            FROM (
+                SELECT FIRST_DAY + LEVEL - 1 ORDER_DATE
+                FROM (
+                    SELECT TRUNCATE(SYSDATE, 'IW') FIRST_DAY FROM DUAL
+            )
+            CONNECT BY FIRST_DAY + LEVEL <![CDATA[<=]]> FIRST_DAY + 7
+            ) CAL
+            LEFT JOIN T_ORDER O
+            ON CAL.ORDER_DATE = O.ORDER_DATE
+            GROUP BY ROLLUP(CAL.ORDER_DATE)
+            ORDER BY ORDER_DATE
+        </if>
+    </select>
+    <select id="getMyStoreId" resultType="long">
+        SELECT STORE_ID FROM DL_MY_STORE WHERE USER_ID = #{userId}
     </select>
 
 </mapper>

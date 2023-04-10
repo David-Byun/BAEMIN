@@ -33,4 +33,26 @@ public class OrderApiController {
         }
         return null;
     }
+
+    //카드 결제 성공 후
+    @PostMapping("/api/order/payment/complete")
+    public ResponseEntity<String> paymentComplete(HttpSession session, OrderInfoDto orderInfo, long totalPrice, @AuthenticationPrincipal CustomUserDetails user) {
+        paymentService.getToken();
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

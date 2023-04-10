@@ -31,4 +31,6 @@ public class OrderListDto {
     private String storeImg;
     private String storeThumb;
     private String deliveryTip;
+
+    private String impUid;
 }
