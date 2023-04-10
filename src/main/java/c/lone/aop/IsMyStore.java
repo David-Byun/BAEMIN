@@ -20,6 +20,9 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD) // Method declaration
 @Retention(RetentionPolicy.RUNTIME)
+/*
+    @Retention(RetentionPolicy.RUNTIME)이 달린 어노테이션은 컴파일된 후 클래스 파일에 포함되어 런타임 시에도 어노테이션 정보를 유지할 수 있습니다. 이러한 유지된 어노테이션 정보는 자바 리플렉션(Reflection)을 사용하여 런타임 시에 프로그램에서 참조할 수 있습니다.
+ */
 public @interface IsMyStore {
 
 }

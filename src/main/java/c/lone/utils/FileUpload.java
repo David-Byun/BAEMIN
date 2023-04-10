@@ -28,7 +28,7 @@ import java.util.UUID;
  */
 @Component
 public class FileUpload {
-    public String uploadImg(MultipartFile file, String imgPathName) {
+    public String uploadReviewImg(MultipartFile file, String imgPathName) {
 
         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyMMdd"));
         String uploadFolder = Paths.get("Users", "david", "upload").toString();

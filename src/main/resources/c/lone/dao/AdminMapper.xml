@@ -298,7 +298,7 @@
             FROM (
                 SELECT FIRST_DAY + LEVEL - 1 ORDER_DATE
                 FROM (
-                    SELECT TRUNC(TO_DATE(#{date}), 'MM') FIRST_DAY FROM DUAL
+                    SELECT TRUNCATE(TO_DATE(#{date}), 'MM') FIRST_DAY FROM DUAL
                 )
                     <!-- LAST_DAY 함수 사용핦 경우 해당 해 또는 달의 마지막날짜까지 검색-->
                 CONNECT BY FIRST_DAY + LEVEL - 1 <![CDATA[<=]]> LAST_DAY(#{date})
@@ -326,6 +326,22 @@
             ON CAL.ORDER_DATE = O.ORDER_DATE
             GROUP BY ROLLUP(CAL.ORDER_DATE)
             ORDER BY ORDER_DATE
+        </if>
+        <if test="term == 'year'">
+        <!-- 날짜의 월을 빼거나 더하기 위해서 ADD_MONTHS 를 사용 -->
+        SELECT TRUNCATE(CAL.ORDER_DATE, 'MM') ORDER_DATE
+                , SUM(O.TOTAL_PRICE) TOTAL
+        FROM (
+            SELECT ADD_MONTHS(FIRST_DAY, LEVEL - 1) ORDER_DATE
+            FROM (
+                    SELECT TRUNCATE(SYSDATE, 'YYYY') FIRST_DAY FROM DUAL
+                )
+            CONNECT BY LEVEL <![CDATA[<=]]> 12
+        ) CAL
+        LEFT JOIN T_ORDER O
+        ON        CAL.ORDER_DATE = TRUNC(O.ORDER_DATE, 'MM')
+        GROUP BY ROLLUP(TRUNC(CAL.ORDER_DATE, 'MM'))
+        ORDER BY ORDER_DATE
         </if>
     </select>
     <select id="getMyStoreId" resultType="long">
